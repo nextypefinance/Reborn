@@ -9,7 +9,6 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 contract Reborn is Ownable, ReentrancyGuard{
     using SafeMath for uint256;
 
-    string public name = "Reborn";
     address public poolToken = 0x7D39b9C548b4d8140C958a56AD6ca7D7b82a863F;
     address public feeReceiver = 0x30Be031A6F3A07F7B8Bb383FD47c89b0D6F7607a;
     uint256 public poolAmount = 0;
@@ -34,7 +33,7 @@ contract Reborn is Ownable, ReentrancyGuard{
 
     function startLife(uint256 min_poolAmount, uint256 max_poolAmount, uint256 ticketAmount, uint256 feeRate, uint256 orderId) public nonReentrant {
         require(poolAmountRange(min_poolAmount, max_poolAmount), "poolAmount exceeded");
-        require(feeRate < 5000, "feeRate exceeded");
+        require(feeRate < 5000000000, "feeRate exceeded");
         require(ticketAmount > 0, "ticketAmount cannot be 0");
         require(orderId > 0, "orderId cannot be 0");
         require(startOrderList[orderId] <= 0, "orderId is exists");
@@ -42,7 +41,7 @@ contract Reborn is Ownable, ReentrancyGuard{
         startOrderList[orderId] = 1;
 
         if(feeRate > 0){
-            uint256 tmpFee = ticketAmount.mul(feeRate).div(10000);
+            uint256 tmpFee = ticketAmount.mul(feeRate).div(10000000000);
             ticketAmount = ticketAmount.sub(tmpFee);
 
             IERC20(poolToken).transferFrom(msg.sender, feeReceiver, tmpFee);
@@ -59,7 +58,7 @@ contract Reborn is Ownable, ReentrancyGuard{
         require(onlyAdmin(msg.sender), "endLift is onlyAdmin");
         require(poolAmountRange(min_poolAmount, max_poolAmount), "poolAmount exceeded");
 
-        require(feeRate < 5000 && feeRate > 0, "feeRate exceeded");
+        require(feeRate < 5000000000 && feeRate > 0, "feeRate exceeded");
         require(lifeLevel > 0, "lifeLevel cannot be 0");
 
         require(orderId > 0, "orderId cannot be 0");
@@ -67,7 +66,7 @@ contract Reborn is Ownable, ReentrancyGuard{
 
         endOrderList[orderId] = 1;
 
-        uint256 tmpAmount = poolAmount.mul(feeRate).div(10000);
+        uint256 tmpAmount = poolAmount.mul(feeRate).div(10000000000);
         poolAmount = poolAmount.sub(tmpAmount);
 
         withdrawingAmount = withdrawingAmount.add(tmpAmount);
@@ -101,7 +100,7 @@ contract Reborn is Ownable, ReentrancyGuard{
         feeReceiver = _receiver;
     }
 
-    function setAdminList(address[] memory _list) public onlyOwner nonReentrant{
+    function setAdminList(address[] memory _list) external onlyOwner nonReentrant{
         require(_list.length > 0, "_list is empty");
         
         for ( uint256 nIndex = 0; nIndex < _list.length; nIndex++){

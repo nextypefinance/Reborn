@@ -18,7 +18,9 @@ contract Talent is ERC721, Ownable, ReentrancyGuard {
 
     event Burn(uint256 tokenId, uint256 orderId);
     event BurnMulti(uint256[] _ids, uint256 orderId);
-
+    event MintItems(address recipient, uint256 numberOfTokens, uint256 orderId);
+    event MintMulti(address[] recipient, uint256 orderId);
+    event MintMultiByOrderIds(address[] recipient, uint256[] orderIds);
 
     constructor() public ERC721("Talent", "Talent") {
         adminList.push(msg.sender);
@@ -58,9 +60,10 @@ contract Talent is ERC721, Ownable, ReentrancyGuard {
 
             _safeMint(recipient, mintIndex);
         }
+        emit MintItems(recipient, numberOfTokens, orderId);
     }
 
-    function mintMulti(address[] memory recipient, uint256 orderId) public nonReentrant {
+    function mintMulti(address[] memory recipient, uint256 orderId) external nonReentrant {
         require(onlyAdmin(msg.sender), "Only administrators can operate");
         require(recipient.length > 0, "Receiver is empty");
         require(orderId > 0, "orderId cannot be 0");
@@ -75,6 +78,29 @@ contract Talent is ERC721, Ownable, ReentrancyGuard {
             uint256 mintIndex = _tokenIds.current();
             _safeMint(recipient[i], mintIndex);
         }
+
+        emit MintMulti(recipient, orderId);
+    }
+
+    function mintMultiByOrderIds(address[] memory recipient, uint256[] memory orderIds) external nonReentrant {
+        require(onlyAdmin(msg.sender), "Only administrators can operate");
+        require(recipient.length > 0, "Receiver is empty");
+        require(recipient.length == orderIds.length, "Inconsistent array length");
+
+        uint256 len = recipient.length;
+
+        for(uint256 i = 0; i < len; i++) {
+            uint256 orderId = orderIds[i];
+            require(orderId > 0, "orderId cannot be 0");
+            require(mintOrderList[orderId] <= 0, "orderId is exists");
+
+            mintOrderList[orderId] = 1;
+            _tokenIds.increment();
+            uint256 mintIndex = _tokenIds.current();
+            _safeMint(recipient[i], mintIndex);
+        }
+
+        emit MintMultiByOrderIds(recipient, orderIds);
     }
 
     function burn(uint256 tokenId, uint256 orderId) public virtual  {
@@ -90,7 +116,7 @@ contract Talent is ERC721, Ownable, ReentrancyGuard {
     }
 
 
-    function burnMulti(uint256[] memory _ids, uint256 orderId) public nonReentrant {
+    function burnMulti(uint256[] memory _ids, uint256 orderId) external nonReentrant {
         require(orderId > 0, "orderId cannot be 0");
         require(burnOrderList[orderId] <= 0, "orderId is exists");
 
